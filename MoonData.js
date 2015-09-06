@@ -3,16 +3,18 @@
  * Returns Lunar Rise/Set times from USNO data
  */
 var http = require('http');
+var Q = require('q');
 
 /**
  * Returns data from USNO in plain text table
  * @param year {Number} - Four Digit Year
  * @param state {String} - Two character state abbr
  * @param town {String} - Town
- * @returns TODO Return {Promise}
+ * @returns {Promise}
  */
 function getData(year, state, town) {
-    return http.get('http://aa.usno.navy.mil/cgi-bin/aa_rstablew.pl?FFX=1&xxy=' + year + '&type=1&st=' + state + '&place=' + town + '&ZZZ=END', function (response) {
+    var deferred = Q.defer();
+    http.get('http://aa.usno.navy.mil/cgi-bin/aa_rstablew.pl?FFX=1&xxy=' + year + '&type=1&st=' + state + '&place=' + town + '&ZZZ=END', function (response) {
         var str;
 
         response.on('data', function (chunk) {
@@ -22,20 +24,21 @@ function getData(year, state, town) {
         response.on('end', function () {
             var dataTable = dataSetOnly(selectTable(str));
             var rows = splitIntoRows(dataTable);
-            // console.log(rows);
             var months = dayMonths(rows);
-            //console.log(months);
             var cleaned = cleanup(months);
-            var transformed = transform(cleaned);
-            console.log(transformed);
+            var transformed = transform(cleaned, year);
+
+            deferred.resolve(transformed);
         });
     }).on('error', function (e) {
-        console.log('Got error: ' + e.message);
+        deferred.reject(e);
     });
+    return deferred.promise;
 }
 
 /**
  * Selects the data table from the HTML document
+ * Data is within a <pre> tag
  * @param str
  * @returns {String}
  */
@@ -46,6 +49,7 @@ function selectTable(str) {
 }
 
 /**
+ * Select the data table only, regex starting at '01' and ending with two line breaks
  * Regex are dark magic, this could break if the format changes
  * @param str
  */
@@ -55,12 +59,22 @@ function dataSetOnly(str) {
     })[0];
 }
 
+/**
+ * Split each line into an array object (table -> rows) and remove the day index
+ * @param str
+ * @returns {Array}
+ */
 function splitIntoRows(str) {
     return str.split(/\r?\n/).map(function (val) {
         return val.replace(/^\d\d\ \ /g, '');
     });
 }
 
+/**
+ * Push each rise/set tuple into an array for each month
+ * @param rows
+ * @returns {*[]}
+ */
 function dayMonths(rows) {
     var months = [[], [], [], [], [], [], [], [], [], [], [], []];
     rows.map(function (row) {
@@ -80,6 +94,11 @@ function dayMonths(rows) {
     return months;
 }
 
+/**
+ * Remove empty values and replace blank spaces with no rise/set time with null to normalize the input format
+ * @param months
+ * @returns {*}
+ */
 function cleanup(months) {
     for (var monthIdx in months) {
         months[monthIdx] = months[monthIdx].filter(function (i) {
@@ -92,14 +111,19 @@ function cleanup(months) {
     return months;
 }
 
-function transform(months) {
+/**
+ * Transform rise/set times into JavaScript Date objects
+ * @param months
+ * @returns {*}
+ */
+function transform(months, year) {
     for (var monthIdx = 0; monthIdx < 12; monthIdx++) {
         for (var dayIdx = 0; dayIdx < months[monthIdx].length; dayIdx++) {
             for (var riseSetIdx in months[monthIdx][dayIdx]) {
                 if (months[monthIdx][dayIdx][riseSetIdx] !== 'null') {
                     var hour = months[monthIdx][dayIdx][riseSetIdx].substring(0, 2);
                     var minute = months[monthIdx][dayIdx][riseSetIdx].substring(2, 4);
-                    months[monthIdx][dayIdx][riseSetIdx] = new Date(2015, monthIdx, dayIdx + 1, hour, minute);
+                    months[monthIdx][dayIdx][riseSetIdx] = new Date(year, monthIdx, dayIdx + 1, hour, minute);
                 }
             }
         }
