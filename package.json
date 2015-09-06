@@ -1,0 +1,17 @@
+{
+  "name": "moon",
+  "version": "0.0.1",
+  "description": "Lunar Information from USNO datasets",
+  "author": "Mark and Carl H",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mhoffmeyerDC/moon"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "request": "^2.61.0"
+  }
+}
