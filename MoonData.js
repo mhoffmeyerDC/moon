@@ -6,14 +6,18 @@ var http = require('http');
 var Q = require('q');
 
 /**
- * Returns data from USNO in plain text table
- * @param year {Number} - Four Digit Year
- * @param state {String} - Two character state abbr
- * @param town {String} - Town
- * @returns {Promise}
+ * Returns USNO data as a 3-deep nested JavaScript Array of [months][days][riseSetPair], [2][0][3] would be March 4, moon rise time
+ * @todo add options for Eastern Hemisphere
+ * @param year {Number} - 4 digit year
+ * @param long_deg {Number} - Longitude in deg W
+ * @param long_m {Number} - Longitude in minutes W
+ * @param lat_deg {Number} - Latitude in deg
+ * @param lat_m {Number} - Latitude in minutes
+ * @param tz_offset {Number} - Western GMT offset, 5 = Eastern
+ * @param name {String} - Friendly Name of data set
+ * @returns {*|promise}
  */
 
-//
 function getData(year, long_deg, long_m, lat_deg, lat_m, tz_offset, name) {
     var deferred = Q.defer();
     var url = 'http://aa.usno.navy.mil/cgi-bin/aa_rstablew.pl?FFX=2&xxy=2015&type=0&place=' + name + '&xx0=-1&xx1=' + long_deg + '&xx2='+ long_m +'&yy0=1&yy1=' + lat_deg + '&yy2=' + lat_m + '&zz1=' + tz_offset + '&zz0=-1&ZZZ=END';
