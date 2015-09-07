@@ -12,9 +12,13 @@ var Q = require('q');
  * @param town {String} - Town
  * @returns {Promise}
  */
-function getData(year, state, town) {
+
+//
+function getData(year, long_deg, long_m, lat_deg, lat_m, tz_offset, name) {
     var deferred = Q.defer();
-    http.get('http://aa.usno.navy.mil/cgi-bin/aa_rstablew.pl?FFX=1&xxy=' + year + '&type=1&st=' + state + '&place=' + town + '&ZZZ=END', function (response) {
+    var url = 'http://aa.usno.navy.mil/cgi-bin/aa_rstablew.pl?FFX=2&xxy=2015&type=0&place=' + name + '&xx0=-1&xx1=' + long_deg + '&xx2='+ long_m +'&yy0=1&yy1=' + lat_deg + '&yy2=' + lat_m + '&zz1=' + tz_offset + '&zz0=-1&ZZZ=END';
+
+    http.get(url, function (response) {
         var str;
 
         response.on('data', function (chunk) {
