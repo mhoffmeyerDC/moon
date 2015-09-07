@@ -1,6 +1,7 @@
+"use strict";
 /**
  * Moon-phase calculation
- * Roger W. Sinnott, Sky & Telescope, June 16, 2006.
+ * Based on Roger W. Sinnott, Sky & Telescope, June 16, 2006.
  */
 
 
@@ -45,14 +46,28 @@ function getJulianDate(mm, dd, yy) {
 
     return jd;
 }
+/**
+ * Returns the Julian Date for a JavaScript date object
+ * From Wikipedia
+ * @link https://en.wikipedia.org/wiki/Julian_day#Finding_Julian_date_given_Julian_day_number_and_time_of_day
+ */
+function myJD(date) {
+    var month = date.getMonth()+1;
+
+    var a = Math.floor((14 - month) / 12);
+    var y = date.getFullYear() + 4800 - a;
+    var m = month + 12*a - 3;
+    var jd = date.getDate() + Math.floor((153*m + 2)/5) + 365*y + Math.floor(y/4) - Math.floor(y/100)+Math.floor(y/400) - 32045;
+    var jdn = jd + ((date.getHours() - 12)/24) + (date.getMinutes() / 1440);
+
+    return Math.floor(jdn * 1000) / 1000;
+}
 
 /**
- * This function returns a nice phase of the moon, but there are some values in here that are important
- *
- * @returns {string} Moon Phase
+ * @param jd - Julian Date
+ * @returns {number} - Lunar Elongation
  */
-function moonElong(mm, dd, yyyy) {
-    var jd = getJulianDate(mm, dd, yyyy);
+function getMoonElong(jd) {
     var dr = Math.PI / 180;
     var rd = 1 / dr;
     var meeDT = Math.pow((jd - 2382148), 2) / (41048480 * 86400);
@@ -70,38 +85,11 @@ function moonElong(mm, dd, yyyy) {
     elong = elong + 1.27 * Math.sin(2 * meeD - meeM1);
     elong = elong + 0.66 * Math.sin(2 * meeD);
     elong = proper_ang(elong);
-    elong = Math.round(elong);
-
-    //The rest of this doesn't seem important to what we're doing
-    //var moonNum = ((elong + 6.43) / 360) * 28;
-    //moonNum = Math.floor(moonNum);
-    //if (moonNum == 28) moonNum = 0;
-    //if (moonNum < 10) moonNum = "0" + moonNum;
-    //
-    //var moonPhase = " new Moon";
-    //if ((moonNum > 3) && (moonNum < 11)) moonPhase = " first quarter";
-    //if ((moonNum > 10) && (moonNum < 18)) moonPhase = " full Moon";
-    //if ((moonNum > 17) && (moonNum < 25)) moonPhase = " last quarter";
-    //
-    //if ((moonNum == 1) || (moonNum == 8) || (moonNum == 15) || (moonNum == 22)) {
-    //    moonPhase = " 1 day past" + moonPhase;
-    //}
-    //if ((moonNum == 2) || (moonNum == 9) || (moonNum == 16) || (moonNum == 23)) {
-    //    moonPhase = " 2 days past" + moonPhase;
-    //}
-    //if ((moonNum == 3) || (moonNum == 10) || (moonNum == 17) || (moonNum == 24)) {
-    //    moonPhase = " 3 days past" + moonPhase;
-    //}
-    //if ((moonNum == 4) || (moonNum == 11) || (moonNum == 18) || (moonNum == 25)) {
-    //    moonPhase = " 3 days before" + moonPhase;
-    //}
-    //if ((moonNum == 5) || (moonNum == 12) || (moonNum == 19) || (moonNum == 26)) {
-    //    moonPhase = " 2 days before" + moonPhase;
-    //}
-    //if ((moonNum == 6) || (moonNum == 13) || (moonNum == 20) || (moonNum == 27)) {
-    //    moonPhase = " 1 day before" + moonPhase;
-    }
-
-    return moonPhase;
+    return Math.round(elong);
 }
 
+module.exports = {
+    getJulianDate: getJulianDate,
+    myJD: myJD,
+    getMoonElong: getMoonElong
+};
